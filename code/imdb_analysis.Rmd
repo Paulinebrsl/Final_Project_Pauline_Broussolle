@@ -33,7 +33,7 @@ my_path <- "~/Documents/GitHub/Final_Project_Pauline_Broussolle/data/"
 dm <- read_csv(paste0(my_path,'clean/movie_data.csv'))
 
 ```
-Link to my github repo <https://github.com/Paulinebrsl/Assignment-1>.
+Link to my github repo: <https://github.com/Paulinebrsl/Final_Project_Pauline_Broussolle>.
 
 We are interested in predicting the score of a movie on IMDB. The aim is to identify the variables that are highly correlated to the outcome variable “imdb_score” and to create a regression model. 
 
@@ -41,7 +41,7 @@ IMDB is the most important movie database and it is consulted by millions of spe
 
 We are based on the hypothesis that movie notation from IMDB users have a positive association with the movie gross and profit. The movie “gross” refers to gross box office earnings in USD and net profit refers distributor’s gross earning minus marketing expenses and distribution costs. Indeed, we can think that if a movie has an important box office score, it means that the public liked it and can give the movie a higher score on IMDB. We will see to what extent this association is true or not. For our analysis, we use the IMDB 5000 movie dataset.
 
-The IMDB 5000 movie dataset comes from Kaggle, we are working. It records data about 5000 movies on the Internet Movie Database (IMBD), from 1916 to 2016.  
+The IMDB 5000 movie dataset comes from Kaggle. It records data about 5000 movies on the Internet Movie Database (IMBD), from 1916 to 2016.  
 
 
 # 1. Data Description
@@ -50,11 +50,11 @@ The raw dataset is very large, as it contains 26 variables for 5043 observations
 
 I started by cleaning the data. I removed duplicates and I removed missing values from two important variables: budget and gross. Almost 20% of the dataset was concerned. We have left less than 5% of the different rows with missing values, which I consider satisfying.
 
-I eliminated several variables that were not very relevant for prediction of IMDB rating, like aspect ratio and movie link on IMDB. I also noticed that language and color were not important factors, as over 95% movies are in color, which means this variable is nearly constant, and over 95% movies are in English. Thus, I chose to eliminate those two variables. Concerning the country of origin, I noticed that movies mainly come from the USA (almost 80%). Thus, I decided to group the country variable into 2 groups: “USA” and “Others”, in order to have less levels. Finally, concerning movie date of release, I noticed that most of the movies in the data are released after 1960. Therefore, I decided to remove movies with a release date before 1960.
-
-In the end we have 3834 observations out of 27 variables.
+I eliminated several variables that were not very relevant for prediction of IMDB rating, like aspect ratio and movie link on IMDB. I also noticed that language and color were not important factors, as over 95% movies are in color and in English, which means these variables are nearly constant. Thus, I chose to eliminate those two variables. Concerning the country of origin, I noticed that movies mainly come from the USA (almost 80%). Thus, I decided to group the country variable into 2 groups: “USA” and “Others”, in order to have less categories. Finally, concerning movie date of release, I noticed that most of the movies in the data are released after 1960. Therefore, I decided to remove movies with a release date before 1960.
 
 I added two new variables to the dataset: profit, which is equal to gross minus budget, and percentage return on investment, which is the ratio of profit on budget. I believe that those two variables can help us to have a better understanding of IMDB ratings.
+
+In the end we have 3834 observations out of 27 variables.
 
 The following table shows the descriptive statistics of key variables in the data: imdb score, profit, number of users who voted and movie gross.  
 
@@ -102,7 +102,7 @@ summary <- mutate (summary, variable = c("imdb score" , "movie profit", "number 
 knitr::kable(summary,caption="Descriptive summary of the variables")
 ```
 
-We check the distribution of imdb scores, the distribution limited between 0 an 10. It is skewed with a left tail. Indeed, a large number of scores are between 5.0 and 7.5.
+We check the distribution of imdb scores, the distribution limited between 0 an 10. It is skewed with a left tail. Indeed, a large number of scores are located between 5.0 and 7.5 as the mean is 6.0.
 ```{r , echo = FALSE, out.width = '50%' }
 # Histograms
 ggplot(data = dm, aes(x=imdb_score)) + 
@@ -121,11 +121,11 @@ Thus, we want to regress “imdb_score” on predictive variables of the dataset
 
 ## 2. a) Pattern of association
 
-First we check the pattern of association between y and each key x variables, with non-parametric regression, by plotting different scatterplots with lowess. We check possible different ln transformation for the variables: gross”, “profit”, “num_critics_for_review” and “num_voted_users".
+First we check the pattern of association between y and each key x variables, with non-parametric regression, by plotting different scatterplots with lowess. We check possible different ln transformation for the variables: "gross”, “profit”, “num_critics_for_review” and “num_voted_users".
 
-For the simple model without scaling, the pattern is non-linear for all the variables. Most of observations are either concentrated on the left or the right of the plot. the bottom and there are some extreme observations.
+For the simple model without scaling, the pattern is non-linear for all the variables. Most of observations are either concentrated on the left or the right of the plot. There are a lot of extreme values.
 
-Instead, the model with the level-log transformation creates a more linear association for all four variables. We see a linear upward trend on the right of the plot. We see that there are some outliers on low scores below 5.0.
+Instead, the model with the level-log transformation creates a more linear association for all four variables. We see a linear upward trend on the right of the plot. We see that there are some outliers on low scores below 5.0. The patterns are not totally linear, we could use a Piecewise Linear Spline model for a better fit.
 
 We create new variables for log of the four variables: ln_profit,  ln_gross,  ln_num_voted_users and ln_num_critic_for_reviews. It is easier to interpret and it gives a better approximation to the average slope of the pattern.
 
@@ -241,29 +241,30 @@ ggcorr(dm, label = TRUE, label_round = 2, label_size = 1, size = 2, hjust = .85)
 
 ## 2. c) Model choice 
 
-We estimate three different regression models: from least to most extended model. We use following models:
+We estimate three different regression models: from least to most extended model. 
+As we saw from the patterns of association above, we choose tu use Piecewise Linear Spline with one knot for gross, profit and number of users who voted. We use following models:
 
 **First regression model with no controls:**
 
-imdb_score = alpha + Beta* log(num_voted_users)
+imdb_score = alpha + Beta* lspline( log(num_voted_users), log(12000) )
 
 **Second regression model with controls:** 
 
-imdb_score = B0 + B1* log(num_voted_users) + B2* log(gross) + B3* log(profit) + B4* log(num_critic_for_review) + B5* duration
+imdb_score = B0 + B1* lspline( log(num_voted_users), log(12000) ) + B2* lspline( log(gross), log(8000000) ) + B3* lspline( log(profit), log(8000000) ) + B4* log(num_critic_for_review) + B5* duration
 
 **Third regression model, extended model:**
 
-imdb_score = B0 + B1* log(gross) + B2* log(num_voted_users) + B3* log(profit) + B4* log(num_critic_for_review) + B5* duration+ B6* Action + B7* Adventure + B8* Drama + B9* Comedy + B10* Horror
+imdb_score = B0 + B1* lspline( log(num_voted_users), log(12000)) + B2* lspline( log(gross), log(8000000)) + B3* lspline( log(profit), log(8000000)) + B4* log(num_critic_for_review) + B5* duration+ B6* Action + B7* Adventure + B8* Drama + B9* Comedy + B10* Horror
 
 ```{r , include = FALSE,  message=FALSE }
 
-reg1 <- lm (imdb_score ~ ln_num_voted_users, data = dm)
+reg1 <- lm (imdb_score ~ lspline( ln_num_voted_users , log(12000) ), data = dm)
 summary( reg1)
          
-reg2 <- lm (imdb_score ~ ln_gross + ln_profit + ln_num_voted_users + ln_num_critic_for_reviews + duration, data = dm)
+reg2 <- lm (imdb_score ~ lspline( ln_profit , log(8000000) ) + lspline( ln_gross , log(8000000) ) + lspline( ln_num_voted_users , log(12000) ) + ln_num_critic_for_reviews + duration, data = dm)
 summary( reg2)
 
-reg3 <- lm (imdb_score ~ ln_gross+ ln_num_voted_users + ln_profit + ln_num_critic_for_reviews + duration + Action + Adventure + Drama + Comedy + Horror, data = dm)
+reg3 <- lm (imdb_score ~ lspline( ln_profit , log(8000000) ) + lspline( ln_gross , log(8000000) ) + lspline( ln_num_voted_users , log(12000) ) + ln_num_critic_for_reviews + duration + Action + Adventure + Drama + Comedy + Horror, data = dm)
 summary( reg3)
 
 # Save the model output
@@ -282,10 +283,13 @@ stargazer(reg1, reg2, reg3,
 
 ```
 
-The results suggest that without controlling for any other variable, IMDB score is 0.04 units higher, on average, for movies with ten percent more users who voted. 
-Then we would like to extend our model to make it more precise. We compare movie that have the same gross, profit, number of critics with reviews and duration less than 120 min – but that differ in terms of number of users who voted. We find that movies with ten percent more voted users have a 0.06 units higher IMDB score, on average.
-We extend this model even more by adding dummy variables for movie genres. When we compare movies with the same gross, profit, number of critics with reviews, duration and genre, we find that movies with ten percent more voted users have a 0.06 units higher IMDB score, on average.
-From our first to our third model, the R-squared increased from 26% to 47%. Thus we keep the third model, which is a better fit. Below we plot our predicted IMDB scores on actual IMDB scores to visualize the fit of our model. Based on our chosen model, most x variables are significant at 1%, except dummy variables "Adventure" and "Drama". For exemple, we can see that when we compare movies with the same gross, profit, number of voted users, critics with reviews and duration, but differ in genre, we find that horror movies have a 0.9 units lower IMDB score, on average. We can state with 95% confidence the score of a horror movie is between 0.98-0.819 units lower. 
+According to the first regression without controlling, using Piecewise Linear Spline, when comparing movies with less than log(12000) voted users, imdb_score is 0,229 units lower on average, for movies with ten percent more voted users. When comparing movies with more than log(12000) voted users, imdb_score is 0.527 units higher on average, for movies with ten percent more voted users. This model captures the flattening of the regression line at the start. The R-squared is 0.32. 
+
+Then we would like to extend our model to make it more precise. We compare movies that have the same gross, profit, number of critics with reviews and duration – but that differ in terms of number of users who voted. We find that correlation is now positive between imdb scores and log number of voted users, both less and more than ln(12000) voted users. The R-squared is 0.45. 
+
+We extend this model even more by adding dummy variables for movie genres. When we compare movies with the same gross, profit, number of critics with reviews, duration, genre, and more than log(12000) voted users, imdb_score is 0.637 units higher on average, for movies with ten percent more voted users.
+
+From our first to our third model, the R-squared increased from 32% to 50%. Thus we keep the third model, which is a better fit. We plot below our predicted IMDB scores on actual scores to visualize the fit of our model. Based on our chosen model, most explanatory variables are significant at 1%, except log of profit below log(8000000) and dummy variables "Adventure" and "Drama". For exemple, we can see that when we compare movies with the same gross, profit, number of voted users, number of critics with reviews and duration, but that differ in genre, we find that horror movies have a 0.86 units lower IMDB score, on average. We can state with 95% confidence the score of a horror movie is between 0.78 and 0.94 units lower. For this third model, we see that correlation is positive between imdb scores and log(profit), but it is negative between imdb scores and log(gross).
 
 ```{r, echo = FALSE, out.width = '60%' }
 #1) y_hat-y plot - use reg3
@@ -295,7 +299,7 @@ dm <- mutate( dm , y_hat = predict( reg3 , dm ) )
 ggplot( data = dm ) +
   geom_point (aes( x = y_hat , y = imdb_score ) ,  color="red")+
   geom_line( aes( x = imdb_score , y =imdb_score ) , color = "navyblue" , size = 1.5 )+
-  labs( x = "Predicted IMDB scores", y = "Actual IMDB scores")
+  labs( x = "Predicted IMDB scores", y = "Actual IMDB scores",title= "y-hat-y plot")
 
 ```
 
@@ -314,10 +318,10 @@ We analyse residuals: we check for our highest and lowest residuals. We can see 
 dm$reg3_y_pred <- reg3$fitted.values
 # Calculate the errors of the model
 dm$reg3_res <- dm$imdb_score - dm$reg3_y_pred 
-# Find country with largest negative errors
+# Find movies with largest negative errors
 l1 <- dm %>% top_n( -5 , reg3_res ) %>% 
       select( movie_title , imdb_score, reg3_y_pred , reg3_res )
-# Find country with largest positive errors
+# Find movies with largest positive errors
 u1 <- dm %>% top_n( 5 , reg3_res ) %>% 
        select( movie_title , imdb_score, reg3_y_pred , reg3_res )
 
@@ -325,27 +329,106 @@ knitr::kable(l1,caption="Movies with largest negative error")
 knitr::kable(u1,caption="Movies with largest positive error")
 ```
 
+\newpage
 ## 2. e) Robustness check
 
+We check the robustness of our model. Since we have many observations, we use a test sample where we re-run our regression and prediction, to check if the results are true. Therefore we use an alternative sample which represents roughly 10% of our original dataset. For creating this new sample, we choose to:
 
-```{r , echo = FALSE }
-# Get the predicted y values from the model
-dm$reg3_y_pred <- reg3$fitted.values
-# Calculate the errors of the model
-dm$reg3_res <- dm$imdb_score - dm$reg3_y_pred 
-# Find country with largest negative errors
-l1 <- dm %>% top_n( -5 , reg3_res ) %>% 
-      select( movie_title , imdb_score, reg3_y_pred , reg3_res )
-# Find country with largest positive errors
-u1 <- dm %>% top_n( 5 , reg3_res ) %>% 
-       select( movie_title , imdb_score, reg3_y_pred , reg3_res )
+- Keep only movies from “Others” countries, thus remove movies from USA
+- Include movies released before 1960
+- Remove movies released after 2010
 
-knitr::kable(l1,caption="Movies with largest negative error")
-knitr::kable(u1,caption="Movies with largest positive error")
+
+```{r , include = FALSE }
+
+sample <- read_csv(paste0(my_path,'clean/movie_sample.csv'))
+
+reg2_robust <- lm (imdb_score ~ lspline( ln_profit , log(8000000) ) + lspline( ln_gross , log(8000000) ) + lspline( ln_num_voted_users , log(12000) ) + ln_num_critic_for_reviews + duration, data = sample)
+summary( reg2)
+
+reg3_robust <- lm (imdb_score ~ lspline( ln_profit , log(8000000) ) + lspline( ln_gross , log(8000000) ) + lspline( ln_num_voted_users , log(12000) ) + ln_num_critic_for_reviews + duration + Action + Adventure + Drama + Comedy + Horror, data = sample)
+summary( reg3)
+
+# Save the model output
+data_out <-"~/Documents/GitHub/Final_Project_Pauline_Broussolle/out/"
+stargazer(list(reg2_robust, reg3_robust), digits=3, out=paste0( data_out,'model_robustness.html'), column.labels = c("Other countries","Other countries"), include.ci = FALSE)
+```
+```{r , echo = FALSE, results = 'asis', message=FALSE, warning = FALSE}
+stargazer(reg2_robust, reg3_robust,  
+          p.auto = FALSE, 
+          no.space = TRUE,
+          single.row=TRUE, 
+          column.labels = c("Other countries","Other countries"),
+          column.sep.width = "1pt",
+          font.size = "small",
+          omit.stat = "f",
+          title="Model Robustness analysis")
+
 ```
 
-We investigated registered death due to covid and number of confirmed covid cases pattern of association. We used the model of Weighted linear regression, using population as weights. The slope for our chosen model is 0.953. This shows that countries with 10% more recorded covid cases have on average 9.5% more death due to covid. This means that the number of registered death due to covid and the number of registered covid cases are positively correlated. The analysis helps us to identify countries with unexpectedly low and high mortality number due to covid.
+\newpage
 
+```{r, echo = FALSE, out.width = '60%' }
+#1) y_hat-y plot - use reg3
+sample <- mutate( sample , y_hat = predict( reg3_robust , sample ) )
+
+#y_hat-y plot
+ggplot( data = sample ) +
+  geom_point (aes( x = y_hat , y = imdb_score ) ,  color="red")+
+  geom_line( aes( x = imdb_score , y =imdb_score ) , color = "navyblue" , size = 1.5 )+
+  labs( x = "Predicted IMDB scores", y = "Actual IMDB scores", title= "y-hat-y plot for Other countries")
+
+```
+
+
+```{r , echo = FALSE, out.width = '60%' }
+# Get the predicted y values from the model
+sample$reg3_y_pred <- reg3_robust$fitted.values
+# Calculate the errors of the model
+sample$reg3_res <- sample$imdb_score - sample$reg3_y_pred 
+# Find movies with largest negative errors
+v1 <- sample %>% top_n( -5 , reg3_res ) %>% 
+      select( movie_title , imdb_score, reg3_y_pred , reg3_res )
+# Find movies with largest positive errors
+w1 <- sample %>% top_n( 5 , reg3_res ) %>% 
+      select( movie_title , imdb_score, reg3_y_pred , reg3_res )
+
+
+knitr::kable(v1,caption="Movies with largest negative error")
+knitr::kable(w1,caption="Movies with largest positive error")
+```
+
+According to our table of estimation results above, we see that R-squared has increased for both regressions, thus the model is a better fit with this sample. The value of each parameter has increased, but they do not show a significant change.
+We can see from our y-hat-y visualization that there are still extreme values, especially for low-rated movies on bottom part of the plot. However we see from our analysis of residuals that positive and negative errors have reduced, which can be due to the fact that we reduced a lot the size of the sample and we may have removed some outliers. Finally, we can say that our model is still significant with this sample, and it has the same weaknesses.
+
+
+# 3. Prediction and uncertainty
+
+We created a visualization of the prediction interval for IMDB scores. The green dots are the upper parts of prediction intervals and black dots are the lower parts. We can be 95% confident that IMDB scores are between these values. We also plotted the actual IMDB scores, to see if they are actually within the prediction interval. We see that our prediction interval contains the actual IMDB scores, so we can validate our model. However the weaknesses of our model are: there are some outliers, especially for low-rated movies ; some of the upper parts and lower parts of the prediction interval overlap with actual IMDB scores. The model do not fit completely, there could be other factors at play. Our predictions are true within the prediction interval, but we would need more explanatory variables to have much more exact predictions. 
+
+```{r , echo = FALSE, out.width = '60%' }
+# Get the prediction interval
+pred3_PI <- predict( reg3, newdata = dm , interval ="prediction" , alpha = 0.05 )
+
+# Add to datatset 
+dm <- dm %>% mutate( PI_reg3_lower = pred3_PI[,2],
+                     PI_reg3_upper = pred3_PI[,3] )
+
+ggplot( data = dm ) +
+  geom_point (aes( x = y_hat , y = imdb_score ) ,  color="red", size=1)+
+  geom_point (aes( x = PI_reg3_lower , y = imdb_score ) ,  color="black", size=1)+
+  geom_point (aes( x = PI_reg3_upper , y = imdb_score ) ,  color="green", size=1)+
+  geom_line( aes( x = imdb_score , y = imdb_score ) , color = "navyblue" , size = 1.5 )+
+  labs( x = "Predicted IMDB scores", y = "Actual IMDB scores", title= "Prediction interval")
+
+```
+
+
+# Summary
+
+We created a prediction model for movie scores on IMDB. We investigated potential explanatory variables correlated to IMDB scores. We used a log transformation for movie gross, profit, number of users who voted and number of critics for reviews. We also added the binary variable duration (1 if duration is superior to 120 min and 0 otherwise) and dummy variables for genres to our multiple regression. Using Piecewise Linear Spline for gross, profit and number of users who voted, we obtained a R-squared of 0.5. We checked for robustness, restricting our attention to movies from countries other than USA and released between 1922 and 2010, which did not have a significant change on our predictions.
+
+We analyzed the differences between our predicted scores and actual IMDB scores. We found that actual IMDB scores are within our prediction interval. Howerver our model is not precise, we would need more explanatory variables to have much more exact predictions. Furthermore, our model is less fitted for movies with low IMDB scores, we should uncover specific factors why people can dislike a movie. This underlines that some factors that make a good movie are difficult to quantify, like artistic talent of the director and actors.
 
 
 

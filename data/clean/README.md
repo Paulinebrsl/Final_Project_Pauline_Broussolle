@@ -1,6 +1,7 @@
-# Assignment-1
+# Final Project
 
-The covid-19 data is collected by Center for Systems Science and Engineering (CSSE) at Johns Hopkins University. We use CSSE covid-19 data daily report from 15/10/2020.
-The collected data contains countries with their number of confirmed covid-19 cases 15/10/2020 and the number of reported death due by covid-19 on 15/10/2020.
-Total population data of countries for 2019 is collected from World Development Indicators maintained by the World Bank’s site. 
+I downloaded the IMDB 5000 Movies Dataset from Kaggle. 
+Internet Movie Databse is the most important movie database and it is consulted by millions of people around the world. 
+The dataset records data about 5000 movies on IMBD, from 1916 to 2016 and from various countries.  
+The clean dataset has 3834 observations out of 27 variables.
 See more in the subfolders' variables.xlsx.
